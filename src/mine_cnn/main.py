@@ -1,10 +1,10 @@
-from turtle import down
 from  torchvision import datasets
 from torchvision.transforms import ToTensor
 import numpy as np
-from network import convolution, max_pool, softmax, Leaky_ReLU, Leaky_ReLU_deriv
+from network import forward_prop_conv, forward_prop_fc
 
 np.random.seed(0)
+np.seterr(invalid="ignore", over = "ignore")
 
 train_dataset = datasets.MNIST(root="data", train=True, transform= ToTensor(), download=True)
 test_dataset = datasets.MNIST(root="data", train=False, transform= ToTensor(), download= True)
@@ -21,40 +21,34 @@ conv_bias1 = np.random.rand(6, 1)
 conv_kernel2 = np.random.rand(16,6,5,5) - 0.5
 conv_bias2 = np.random.rand(16, 1)
 
-fc_weight1 = np.random.rand(120, 400)
-fc_bias1 = np.random.rand(120)
+fc_weight1 = np.random.rand(120, 400) - 0.5
+fc_bias1 = np.random.rand(120, 1)
 
-fc_weight2 = np.random.rand(84, 120)
-fc_bias2 = np.random.rand(84)
+fc_weight2 = np.random.rand(84, 120) - 0.5
+fc_bias2 = np.random.rand(84, 1)
 
-#print(train_input.shape)
+fc_weight3 = np.random.rand(10, 84) - 0.5
+fc_bias3 = np.random.rand(10, 1)
+
+print(train_input.shape)
 #print(train_target.shape)
 
 
 current_image : np.ndarray = []
 
-for i in range(len(train_input)):
+conv_outputs : np.ndarray = []
+
+for i in range(round(len(train_input)/60)):
 
     current_image = train_input[i][0]
-    padded_image = np.array([np.pad(current_image, 2, mode='constant')])
+    flatten_output = forward_prop_conv(image = current_image, conv_kernel1 = conv_kernel1, conv_bias1 = conv_bias1, conv_kernel2 = conv_kernel2, conv_bias2 = conv_bias2)
+    conv_outputs.append(flatten_output)
 
-    print("current_image:", current_image.shape)
-    print("padded_image:",padded_image.shape)
+    if i % 1000 == 0:
+        print(i,"th iteration")
 
-    conv_output1 = convolution(padded_image, conv_kernel1, conv_bias1)
-    print("conv_output1:",conv_output1.shape)
+conv_outputs = np.array(conv_outputs).T
 
-    max_pool_output1 = max_pool(conv_output1, kernel_size = 2, stride = 2, padding = 0 )
-    print("max_pool_output1:", max_pool_output1.shape)
+results = forward_prop_fc(images = conv_outputs, weight1 = fc_weight1, bias1 = fc_bias1, weight2 = fc_weight2, bias2 = fc_bias2, weight3 = fc_weight3, bias3 = fc_bias3)
 
-    conv_output2 = convolution(max_pool_output1, conv_kernel2, conv_bias2)
-    print("conv_output2:", conv_output2.shape)
-
-    max_pool_output2 = max_pool(conv_output2, kernel_size = 2, stride = 2, padding = 0 )
-    print("max_pool_output2:",max_pool_output2.shape)
-
-    flatten_output = max_pool_output2.flatten().reshape((400,1))
-    print(flatten_output.shape)
-
-
-    
+print(results.shape)
