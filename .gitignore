@@ -128,3 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 dataset
+
+src/mine_cnn/data
