@@ -33,28 +33,28 @@ fc_bias2 = np.random.rand(84)
 
 current_image : np.ndarray = []
 
-#for i in range(len(train_input)):
-    
-current_image = train_input[1][0]
-padded_image = np.array([np.pad(current_image, 2, mode='constant')])
+for i in range(len(train_input)):
 
-print("current_image:", current_image[1][0].shape)
-print("padded_image:",padded_image.shape)
+    current_image = train_input[i][0]
+    padded_image = np.array([np.pad(current_image, 2, mode='constant')])
 
-conv_output1 = convolution(padded_image, conv_kernel1, conv_bias1)
-print("conv_output1:",conv_output1.shape)
+    print("current_image:", current_image.shape)
+    print("padded_image:",padded_image.shape)
 
-max_pool_output1 = max_pool(conv_output1, kernel_size = 2, stride = 2, padding = 0 )
-print("max_pool_output1:", max_pool_output1.shape)
+    conv_output1 = convolution(padded_image, conv_kernel1, conv_bias1)
+    print("conv_output1:",conv_output1.shape)
 
-conv_output2 = convolution(max_pool_output1, conv_kernel2, conv_bias2)
-print("conv_output2:", conv_output2.shape)
+    max_pool_output1 = max_pool(conv_output1, kernel_size = 2, stride = 2, padding = 0 )
+    print("max_pool_output1:", max_pool_output1.shape)
 
-max_pool_output2 = max_pool(conv_output2, kernel_size = 2, stride = 2, padding = 0 )
-print("max_pool_output2:",max_pool_output2.shape)
+    conv_output2 = convolution(max_pool_output1, conv_kernel2, conv_bias2)
+    print("conv_output2:", conv_output2.shape)
 
-flatten_output = max_pool_output2.flatten().reshape((400,1))
-print(flatten_output.shape)
+    max_pool_output2 = max_pool(conv_output2, kernel_size = 2, stride = 2, padding = 0 )
+    print("max_pool_output2:",max_pool_output2.shape)
+
+    flatten_output = max_pool_output2.flatten().reshape((400,1))
+    print(flatten_output.shape)
 
 
     
