@@ -53,6 +53,7 @@ def forward_prop_conv(image, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2)
 
     return flatten_output
 
+
 def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
     Z1 = weight1.dot(images) + bias1
     A1 = Leaky_ReLU(Z1)
@@ -62,3 +63,43 @@ def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
     A3 = softmax(Z3)
 
     return A3
+
+
+def backward_prop_fc(images, classes, Z1, A1, Z2, A2, Z3, A3, W1, W2, W3):
+    train_image_count = len(images)
+    one_hot_classes = one_hot(classes)
+
+    dZ3 = A3 - one_hot_classes
+    dW3 = (1/train_image_count) * dZ3.dot(A2.T)
+    db3 = (1/train_image_count) * np.sum(dZ3)
+
+    dZ2 = W3.T.dot(dZ3) * Leaky_ReLU_deriv(Z2)
+    dW2 = (1/train_image_count) * dZ2.dot(A1.T)
+    db2 = (1/train_image_count) * np.sum(dZ2)
+
+    dZ1 = W2.T.dot(dZ2) * Leaky_ReLU_deriv(Z1)
+    dW1 = (1/train_image_count) * dZ1.dot(images.T)
+    db1 = (1/train_image_count) * np.sum(dZ1)
+
+    return dW3, db3, dW2, db2, dW1, db1
+
+
+def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha):
+        
+        W1 = W1 - alpha * dW1
+        b1 = b1 - alpha * db1
+        
+        W2 = W2 - alpha * dW2
+        b2 = b2 - alpha * db2
+
+        W3 = W3 * alpha * dW3
+        b3 = b3 - alpha * db3
+
+        return W3, b3, W2, b2, W1, b1
+
+
+def one_hot(Y):
+    one_hot_Y = np.zeros((Y.size, Y.max() + 1))
+    one_hot_Y[np.arange(Y.size), Y] = 1
+    one_hot_Y = one_hot_Y.T
+    return one_hot_Y
