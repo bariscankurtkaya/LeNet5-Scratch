@@ -3,8 +3,8 @@ from type import correlation_mode, boundary
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
-def cross_correlation_2d(matrix: np.ndarray, kernel: np.ndarray, boundary: boundary = "fill", mode: correlation_mode ="valid", fillvalue: int = 0) -> np.ndarray:
-    return signal.correlate2d(matrix, kernel, boundary = boundary, mode = mode, fillvalue = fillvalue)
+def cross_correlation(matrix: np.ndarray, kernel: np.ndarray, mode="valid") -> np.ndarray:
+    return signal.correlate(matrix, kernel, mode)
 
 
 def pool2d(A, kernel_size, stride, padding=0, pool_mode='max'):
