@@ -6,7 +6,7 @@ import cv2 as cv
 
 
 def cross_correlation(matrix: np.ndarray, kernel: np.ndarray, mode="valid") -> np.ndarray:
-    return signal.correlate(matrix, kernel, mode)
+    return signal.correlate(matrix, kernel, mode) / (255 * kernel.size)
 
 
 def pool2d(A, kernel_size, stride, padding=0, pool_mode='max'):

@@ -53,7 +53,6 @@ def forward_prop_conv(image, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2)
 
     flatten_output = max_pool_output2.flatten()
 
-    flatten_output = flatten_output / np.max(flatten_output)
     #print(flatten_output.shape)
 
     return flatten_output, conv_output1, max_pool_output1, conv_output2, max_pool_output2
@@ -67,7 +66,7 @@ def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
     Z3 = weight3.dot(A2) + bias3
     A3 = softmax(Z3)
 
-    print("img: ", images[:5], "\nA1: ", A1[:5], "\nA2: ", A2[:5], "\nA3: ", A3[:5], "\nweight1: ", np.max(weight1[:5]), "\nweight2: ",  np.max(weight2[:5]), "\nweight3: ",  np.max(weight3[:5]))
+    print("weight1: ", np.max(weight1[:5]), "\nweight2: ",  np.max(weight2[:5]), "\nweight3: ",  np.max(weight3[:5]))
 
     return A3,Z3,A2,Z2,A1,Z1
 
@@ -90,7 +89,6 @@ def backward_prop_fc(images, classes, A3, Z3, A2, Z2, A1, Z1, W1, W2, W3):
 
     dA0 = W1.T.dot(dZ1)
 
-    print("dW1: ", dW1[:5], "\ndW2: ", dW2[:5], "\ndW3: ", dW3[:5])
     #print("dZ1 shape", dZ1.shape, "dZ2 shape", dZ2.shape, "dZ3 shape", dZ3.shape)
 
     return dW3, db3, dW2, db2, dW1, db1, dA0
@@ -104,7 +102,7 @@ def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha
         W2 = W2 - alpha * dW2
         b2 = b2 - alpha * db2
 
-        W3 = W3 * alpha * dW3
+        W3 = W3 - alpha * dW3
         b3 = b3 - alpha * db3
 
         return W3, b3, W2, b2, W1, b1
