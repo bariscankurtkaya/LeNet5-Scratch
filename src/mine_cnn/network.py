@@ -1,3 +1,4 @@
+from pickletools import int4
 from signal_func import cross_correlation, pool2d
 import numpy as np
 
@@ -18,8 +19,10 @@ def max_pool(input, kernel_size, stride, padding):
     return np.array(max_pool_output)
 
 def softmax(Z):
-        A = np.exp(Z) / sum(np.exp(Z))
-        return A
+        f = np.exp(Z - np.max(Z))  # shift values
+        return f / f.sum(axis=0)
+
+
 
 def Leaky_ReLU(Z):
         Z = np.where(Z > 0, Z, Z * 0.1)
@@ -49,9 +52,11 @@ def forward_prop_conv(image, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2)
     #print("max_pool_output2:",max_pool_output2.shape)
 
     flatten_output = max_pool_output2.flatten()
+
+    flatten_output = flatten_output / np.max(flatten_output)
     #print(flatten_output.shape)
 
-    return flatten_output
+    return flatten_output, conv_output1, max_pool_output1, conv_output2, max_pool_output2
 
 
 def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
@@ -62,11 +67,13 @@ def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
     Z3 = weight3.dot(A2) + bias3
     A3 = softmax(Z3)
 
-    return A3
+    print("img: ", images[:5], "\nA1: ", A1[:5], "\nA2: ", A2[:5], "\nA3: ", A3[:5], "\nweight1: ", np.max(weight1[:5]), "\nweight2: ",  np.max(weight2[:5]), "\nweight3: ",  np.max(weight3[:5]))
+
+    return A3,Z3,A2,Z2,A1,Z1
 
 
-def backward_prop_fc(images, classes, Z1, A1, Z2, A2, Z3, A3, W1, W2, W3):
-    train_image_count = len(images)
+def backward_prop_fc(images, classes, A3, Z3, A2, Z2, A1, Z1, W1, W2, W3):
+    train_image_count = len(images[0])
     one_hot_classes = one_hot(classes)
 
     dZ3 = A3 - one_hot_classes
@@ -81,7 +88,12 @@ def backward_prop_fc(images, classes, Z1, A1, Z2, A2, Z3, A3, W1, W2, W3):
     dW1 = (1/train_image_count) * dZ1.dot(images.T)
     db1 = (1/train_image_count) * np.sum(dZ1)
 
-    return dW3, db3, dW2, db2, dW1, db1
+    dA0 = W1.T.dot(dZ1)
+
+    print("dW1: ", dW1[:5], "\ndW2: ", dW2[:5], "\ndW3: ", dW3[:5])
+    #print("dZ1 shape", dZ1.shape, "dZ2 shape", dZ2.shape, "dZ3 shape", dZ3.shape)
+
+    return dW3, db3, dW2, db2, dW1, db1, dA0
 
 
 def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha):
@@ -99,6 +111,7 @@ def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha
 
 
 def one_hot(Y):
+    Y = Y.cpu().detach().numpy()
     one_hot_Y = np.zeros((Y.size, Y.max() + 1))
     one_hot_Y[np.arange(Y.size), Y] = 1
     one_hot_Y = one_hot_Y.T

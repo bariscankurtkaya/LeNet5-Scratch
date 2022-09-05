@@ -2,6 +2,8 @@ from scipy import signal
 from type import correlation_mode, boundary
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
+import cv2 as cv
+
 
 def cross_correlation(matrix: np.ndarray, kernel: np.ndarray, mode="valid") -> np.ndarray:
     return signal.correlate(matrix, kernel, mode)
@@ -35,3 +37,6 @@ def pool2d(A, kernel_size, stride, padding=0, pool_mode='max'):
         return A_w.max(axis=(2, 3))
     elif pool_mode == 'avg':
         return A_w.mean(axis=(2, 3))
+
+def integral_img(img: np.ndarray) -> np.ndarray:
+    return cv.integral(img)
