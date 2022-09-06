@@ -21,7 +21,10 @@ def max_pool(input, kernel_size, stride, padding):
 def softmax(Z):
         f = np.exp(Z - np.max(Z))  # shift values
         return f / f.sum(axis=0)
-
+        """
+        A = np.exp(Z) / sum(np.exp(Z))
+        return A
+        """
 
 
 def Leaky_ReLU(Z):
@@ -66,7 +69,7 @@ def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
     Z3 = weight3.dot(A2) + bias3
     A3 = softmax(Z3)
 
-    print("weight1: ", np.max(weight1[:5]), "\nweight2: ",  np.max(weight2[:5]), "\nweight3: ",  np.max(weight3[:5]))
+    print("weight1: ", np.max(weight1), "\nweight2: ",  np.max(weight2), "\nweight3: ",  np.max(weight3))
 
     return A3,Z3,A2,Z2,A1,Z1
 
@@ -104,6 +107,9 @@ def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha
 
         W3 = W3 - alpha * dW3
         b3 = b3 - alpha * db3
+
+        print("dw1: ", np.max(dW1), "\ndW2: ",  np.max(dW2), "\ndW3: ",  np.max(dW3))
+
 
         return W3, b3, W2, b2, W1, b1
 
