@@ -18,3 +18,5 @@ def max_pool(input, kernel_size, stride, padding) -> np.ndarray:
     return np.array(max_pool_output)
 
 
+def create_LeNet5_network():
+    
