@@ -1,5 +1,5 @@
 from re import X
-from signal_func import cross_correlation, pool2d, convolution_func, backward_cross_correlation
+from signal_func import cross_correlation, pool2d, convolution_func
 import numpy as np
 
 def convolution(input, conv_kernel, conv_bias):
@@ -26,6 +26,13 @@ def softmax(Z):
         return A
         """
 
+def sigmoid(Z):
+    return 1/(1 + np.exp(-Z))
+
+
+def sigmoid_deriv(Z):
+    return sigmoid(Z) * (1 - sigmoid(Z))
+
 
 def Leaky_ReLU(Z):
         Z = np.where(Z > 0, Z, Z * 0.1)
@@ -45,20 +52,24 @@ def forward_prop_conv(image, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2)
     conv_output1 = convolution(padded_image, conv_kernel1, conv_bias1)
     #print("conv_output1:",conv_output1.shape)
 
-    max_pool_output1 = max_pool(conv_output1, kernel_size = 2, stride = 2, padding = 0 )
+    relu_conv_output1 = Leaky_ReLU(conv_output1)
+
+    max_pool_output1 = max_pool(relu_conv_output1, kernel_size = 2, stride = 2, padding = 0 )
     #print("max_pool_output1:", max_pool_output1.shape)
 
     conv_output2 = convolution(max_pool_output1, conv_kernel2, conv_bias2)
     #print("conv_output2:", conv_output2.shape)
 
-    max_pool_output2 = max_pool(conv_output2, kernel_size = 2, stride = 2, padding = 0 )
+    relu_conv_output2 = Leaky_ReLU(conv_output2)
+
+    max_pool_output2 = max_pool(relu_conv_output2, kernel_size = 2, stride = 2, padding = 0 )
     #print("max_pool_output2:",max_pool_output2.shape)
 
     flatten_output = max_pool_output2.flatten()
 
     #print(flatten_output.shape)
 
-    return flatten_output, conv_output1, max_pool_output1, conv_output2, max_pool_output2, padded_image
+    return flatten_output, relu_conv_output1, max_pool_output1, relu_conv_output2, max_pool_output2, padded_image
 
 
 def forward_prop_fc(images, weight1, bias1, weight2, bias2, weight3, bias3):
@@ -90,11 +101,11 @@ def backward_prop_fc(images, classes, A3, Z3, A2, Z2, A1, Z1, W1, W2, W3):
     dW1 = (1/train_image_count) * dZ1.dot(images.T)
     db1 = (1/train_image_count) * np.sum(dZ1)
 
-    dA0 = W1.T.dot(dZ1)
+    dZ0 = W1.T.dot(dZ1) * Leaky_ReLU_deriv(images)
 
     #print("dZ1 shape", dZ1.shape, "dZ2 shape", dZ2.shape, "dZ3 shape", dZ3.shape)
 
-    return dW3, db3, dW2, db2, dW1, db1, dA0
+    return dW3, db3, dW2, db2, dW1, db1, dZ0
 
 
 def update_params_fc(W3, b3, W2, b2, W1, b1, dW3, db3, dW2, db2, dW1, db1, alpha):
@@ -122,14 +133,16 @@ def one_hot(Y):
     return one_hot_Y
 
 
-def backward_prop_conv(input1, input2, dA0, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2, alpha):
+def backward_prop_conv(input1, input2, dZ0, conv_kernel1, conv_bias1, conv_kernel2, conv_bias2, alpha):
     #CK -> Conv Kernel
     #CB -> Conv Bias
-    # dA0 = dY2
-    dA0 = flatten_2_kernel(dA0.T)
+    # dZ0 = dY2
+    print(dZ0.shape)
+    dZ0 = flatten_2_kernel(dZ0.T)
+    print(dZ0.shape)
 
-    for n in range(len(dA0)):
-        currentdA0 = upsampling(dA0[n])
+    for n in range(len(dZ0)):
+        currentdA0 = upsampling(dZ0[n])
         #print(currentdA0.shape)
 
         dCK2 = np.zeros((16,6,5,5))
@@ -140,21 +153,24 @@ def backward_prop_conv(input1, input2, dA0, conv_kernel1, conv_bias1, conv_kerne
         #print(dA0[0].shape, conv_kernel2[0].shape)
         for i in range(len(conv_kernel2)):
             for j in range(len(conv_kernel2[i])):
-                dCK2[i][j] = backward_cross_correlation(input2[j], currentdA0[i])
+                dCK2[i][j] = cross_correlation(input2[j], currentdA0[i])
                 dY1[j] = convolution_func(currentdA0[i], conv_kernel2[i][j])
 
         #print(dCK2.shape)
 
         dB2 = currentdA0
 
+        dY1 = dY1 * Leaky_ReLU_deriv(input2)
+
         dY1 = upsampling(dY1)
+
 
         dB1 = dY1
 
         for i in range(len(conv_kernel1)):
             for j in range(len(conv_kernel1[i])):
-                dCK1[i][j] = backward_cross_correlation(input1[j], dY1[i])
-        
+                dCK1[i][j] = cross_correlation(input1[j], dY1[i])
+
         conv_kernel2 = np.subtract(conv_kernel2, alpha*dCK2)
         conv_kernel1 = np.subtract(conv_kernel1, alpha*dCK1)
 

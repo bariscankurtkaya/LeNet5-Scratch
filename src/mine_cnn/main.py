@@ -51,7 +51,7 @@ for epoch_index in range(EPOCH):
     #Conv forward
     for i in range(round(len(train_input)/60)):
 
-        current_image = train_input[i][0]
+        current_image = train_input[i][0] / 255
         flatten_output, conv_output1, max_pool_output1, conv_output2, max_pool_output2, padded_image = forward_prop_conv(image = current_image, conv_kernel1 = conv_kernel1, conv_bias1 = conv_bias1, conv_kernel2 = conv_kernel2, conv_bias2 = conv_bias2)
         conv_outputs.append(flatten_output)
 
@@ -76,14 +76,14 @@ for epoch_index in range(EPOCH):
     print("results: ", np.argmax(results, axis=0)[:20], np.max(results, axis=0)[:20])
 
 
-    dW3, db3, dW2, db2, dW1, db1, dA0 = backward_prop_fc(images = conv_outputs, classes = train_target[:1000], A3= results, Z3=Z3,A2=A2,Z2=Z2,A1=A1,Z1=Z1, W1 = fc_weight1, W2 = fc_weight2, W3 = fc_weight3)
+    dW3, db3, dW2, db2, dW1, db1, dZ0 = backward_prop_fc(images = conv_outputs, classes = train_target[:1000], A3= results, Z3=Z3,A2=A2,Z2=Z2,A1=A1,Z1=Z1, W1 = fc_weight1, W2 = fc_weight2, W3 = fc_weight3)
 
-    conv_kernel1, conv_bias1, conv_kernel2, conv_bias2 = backward_prop_conv(input1 = padded_image, input2 = max_pool_output1, dA0 = dA0, conv_kernel1= conv_kernel1, conv_bias1=conv_bias1, conv_kernel2=conv_kernel2, conv_bias2=conv_bias2, alpha=0.01)
+    conv_kernel1, conv_bias1, conv_kernel2, conv_bias2 = backward_prop_conv(input1 = padded_image, input2 = max_pool_output1, dZ0 = dZ0, conv_kernel1= conv_kernel1, conv_bias1=conv_bias1, conv_kernel2=conv_kernel2, conv_bias2=conv_bias2, alpha=0.003)
 
-    fc_weight3, fc_bias3, fc_weight2, fc_bias2, fc_weight1, fc_bias1 = update_params_fc(fc_weight3, fc_bias3, fc_weight2, fc_bias2, fc_weight1, fc_bias1, dW3, db3, dW2, db2, dW1, db1, 0.01)
+    fc_weight3, fc_bias3, fc_weight2, fc_bias2, fc_weight1, fc_bias1 = update_params_fc(fc_weight3, fc_bias3, fc_weight2, fc_bias2, fc_weight1, fc_bias1, dW3, db3, dW2, db2, dW1, db1, 0.003)
     
     time_stop = time.time()
-    print("whole process spent", round(time_stop - time_start) / 60 , "mins")
+    print("whole process spent", round(time_stop - time_start)  , "secs")
 
 print((train_target.cpu().detach().numpy())[:20])
 print(np.argmax(results, axis = 0)[:20])
