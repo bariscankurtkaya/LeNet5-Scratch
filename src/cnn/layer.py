@@ -50,11 +50,11 @@ def forward_prop_fc(input: IMG, fc_layers:List[fc_layer]) -> fc_cache:
 # Backward Functions
 
 def backward_prop(forward_cache: forward_cache, network: network, true_labels, learning_rate: int) -> network:
-    net_backward_cache: backward_cache
+    net_backward_cache: backward_cache = create_backward_cache()
     true_labels = one_hot(true_labels)
-    print("Altta galiba")
+
     net_backward_cache["bfc_cache"] = backward_prop_fc(forward_cache= forward_cache, fc_layers= network["fc_layers"], true_labels= true_labels)
-    print("Herhalde")
+
     net_backward_cache["bconv_cache"] = backward_prop_conv(backward_cache=net_backward_cache,conv_cache=forward_cache["conv_cache"], conv_layers= network["conv_layers"])
     
     network = update_params(backward_cache= net_backward_cache, network=network, learning_rate=learning_rate)
@@ -65,20 +65,19 @@ def backward_prop(forward_cache: forward_cache, network: network, true_labels, l
 
 
 def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], true_labels: np.ndarray) -> bfc_cache:
-    net_bfc_cache : bfc_cache
+    net_bfc_cache : bfc_cache = create_bfc_cache()
     for i in range(len(fc_layers)):
         if i == 0:
             dZ = forward_cache["fc_cache"]["activation_outputs"][-1] - true_labels
         else:
-            dZ = fc_layers[-i].T.dot(dZ) * activation(input = forward_cache["fc_cache"]["activation_outputs"][-1], activation=fc_layers[-i-1]["activation"], derivative=True)
-        print(dZ.shape)
-        
+            dZ = fc_layers[-i]["weight"].T.dot(dZ) * activation(input = forward_cache["fc_cache"]["activation_outputs"][-i-1], activation=fc_layers[-i-1]["activation"], derivative=True)
+
         if i+1 < len(fc_layers):
-            net_bfc_cache["weight"][i] = 1/len(true_labels[0]) * dZ.dot(forward_cache["fc_cache"]["activation_outputs"][-i-2])
+            net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(forward_cache["fc_cache"]["activation_outputs"][-i-2].T))
         else:
-            net_bfc_cache["weight"][i] = 1/len(true_labels[0]) * dZ.dot(forward_cache["conv_cache"]["last_output"])
+            net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(forward_cache["conv_cache"]["last_output"].T))
         
-        net_bfc_cache["bias"][i] = 1/len(true_labels[0]) * np.sum(dZ)
+        net_bfc_cache["bias_derivs"].append(1/len(true_labels[0]) * np.sum(dZ))
 
     net_bfc_cache["last_deriv"] = dZ #dZ1
 
@@ -88,18 +87,19 @@ def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], tr
 
 
 def backward_prop_conv(backward_cache: backward_cache, conv_cache: conv_cache, conv_layers: List[conv_layer]) -> bconv_cache:
-    net_bconv_cache: bconv_cache
+    net_bconv_cache: bconv_cache = create_bconv_cache()
 
-    dZ0 = np.dot(backward_cache["bfc_cache"]["weight"][-1].T, (backward_cache["bfc_cache"]["last_deriv"])) * activation(input = conv_cache["last_output"], activation= conv_layers[-1]["activation"], derivative=True)
+    dZ0 = np.dot(backward_cache["bfc_cache"]["weight_derivs"][-1].T, (backward_cache["bfc_cache"]["last_deriv"])) * activation(input = conv_cache["last_output"], activation= conv_layers[-1]["activation"], derivative=True)
     
-    dZ0 = flatten_2_kernel(dZ0.T)
-
+    dZ0 = flatten_2_kernel(dZ0.T)[0]
+    
     for n in range(len(conv_layers)):
         if conv_layers[-n-1]["pooling"] is not None:
-            conv_output_deriv = upsampling(dZ0[0])
+            conv_output_deriv = upsampling(dZ0)
         kernel_deriv = np.zeros(conv_layers[-n-1]["kernel"].shape)
-
+        
         bias_deriv = conv_output_deriv
+        print(conv_output_deriv.shape) #Bias shape sikintili
         for i in range(len(conv_layers[-n-1]["kernel"])):
             for j in range(len(conv_layers[-n-1]["kernel"][i])):
                 kernel_deriv[i][j] = cross_corr_func(conv_cache["conv_inputs"][-n-1][j], conv_output_deriv[i])

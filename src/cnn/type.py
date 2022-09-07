@@ -91,3 +91,25 @@ def create_forward_cache() -> forward_cache:
         "loss" : 0
     }
     return new_forward_cache
+
+def create_bfc_cache() -> bfc_cache:
+    new_bfc_cache: bfc_cache = {
+        "weight_derivs": [],
+        "bias_derivs": [],
+        "last_deriv": np.array([])
+    }
+    return new_bfc_cache
+
+def create_bconv_cache() -> bconv_cache:
+    new_bconv_cache: bconv_cache = {
+        "kernel_derivs": [],
+        "bias_derivs": []
+    }
+    return new_bconv_cache
+
+def create_backward_cache() -> backward_cache:
+    new_backward_cache: backward_cache = {
+        "bfc_cache": create_bfc_cache,
+        "bconv_cache": create_bconv_cache
+    }
+    return new_backward_cache
