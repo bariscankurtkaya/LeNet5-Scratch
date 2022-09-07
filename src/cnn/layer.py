@@ -7,7 +7,7 @@ from math_eq import *
 
 # Forward Functions
 def forward_prop(input: IMG, network: network) -> forward_cache:
-    net_forward_cache : forward_cache
+    net_forward_cache : forward_cache = create_forward_cache()
 
     net_forward_cache["conv_cache"] = forward_prop_conv(input=input, conv_layers=network["conv_layers"])
 
@@ -18,29 +18,32 @@ def forward_prop(input: IMG, network: network) -> forward_cache:
 
 
 def forward_prop_conv(input: IMG, conv_layers:List[conv_layer]) -> conv_cache:
-    net_conv_cache : conv_cache
+    net_conv_cache : conv_cache = create_conv_cache()
+
     for i in range(len(conv_layers)):
-        net_conv_cache["conv_inputs"][i] = input
+        net_conv_cache["conv_inputs"].append(input)
 
         output: np.ndarray = cross_correlation(input, conv_layers[i])
         input = output
 
-    net_conv_cache["last_output"] = output.flatten()
+    flatten_output = output.flatten()
+    net_conv_cache["last_output"] = np.array([flatten_output]).T
 
     return net_conv_cache
 
 
 
 def forward_prop_fc(input: IMG, fc_layers:List[fc_layer]) -> fc_cache:
-    net_fc_cache : fc_cache
+    net_fc_cache : fc_cache = create_fc_cache()
     for i in range(len(fc_layers)):
         output: np.ndarray = fc_layers[i]["weight"].dot(input) + fc_layers[i]["bias"]
         activated_output = activation(input = output, activation=fc_layers[i]["activation"])
+        net_fc_cache["layer_outputs"].append(output)
+        net_fc_cache["activation_outputs"].append(activated_output)
 
-        net_fc_cache["layer_outputs"][i] = output
-        net_fc_cache["activation_outputs"][i] = activated_output
+        input = activated_output
 
-    return fc_cache
+    return net_fc_cache
 
 
 
@@ -49,9 +52,9 @@ def forward_prop_fc(input: IMG, fc_layers:List[fc_layer]) -> fc_cache:
 def backward_prop(forward_cache: forward_cache, network: network, true_labels, learning_rate: int) -> network:
     net_backward_cache: backward_cache
     true_labels = one_hot(true_labels)
-
+    print("Altta galiba")
     net_backward_cache["bfc_cache"] = backward_prop_fc(forward_cache= forward_cache, fc_layers= network["fc_layers"], true_labels= true_labels)
-    
+    print("Herhalde")
     net_backward_cache["bconv_cache"] = backward_prop_conv(backward_cache=net_backward_cache,conv_cache=forward_cache["conv_cache"], conv_layers= network["conv_layers"])
     
     network = update_params(backward_cache= net_backward_cache, network=network, learning_rate=learning_rate)
@@ -68,7 +71,8 @@ def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], tr
             dZ = forward_cache["fc_cache"]["activation_outputs"][-1] - true_labels
         else:
             dZ = fc_layers[-i].T.dot(dZ) * activation(input = forward_cache["fc_cache"]["activation_outputs"][-1], activation=fc_layers[-i-1]["activation"], derivative=True)
-
+        print(dZ.shape)
+        
         if i+1 < len(fc_layers):
             net_bfc_cache["weight"][i] = 1/len(true_labels[0]) * dZ.dot(forward_cache["fc_cache"]["activation_outputs"][-i-2])
         else:
@@ -146,14 +150,14 @@ def create_fc_layer(input_size, output_size, activation) -> fc_layer:
 
 
 # Pooling layer functions
-def max_pool(input:IMG, kernel_size: int, stride: int = 2, padding: int = 0) -> IMG:
+def max_pool(input:IMG, kernel_size: int = 2, stride: int = 2, padding: int = 0) -> IMG:
     max_pool_output = []
     for i in range(len(input)):
         max_pool_output.append(pool2d(input[i][0], kernel_size = kernel_size, stride = stride, padding = padding))
     
     return np.array(max_pool_output)
 
-def mean_pool(input:IMG, kernel_size: int, stride: int = 2, padding: int = 0) -> IMG:
+def mean_pool(input:IMG, kernel_size: int = 2, stride: int = 2, padding: int = 0) -> IMG:
     mean_pool_output = []
     for i in range(len(input)):
         mean_pool_output.append(pool2d(input[i][0], kernel_size = kernel_size, stride = stride, padding = padding, pool_mode="mean"))
@@ -169,7 +173,7 @@ def mean_pool(input:IMG, kernel_size: int, stride: int = 2, padding: int = 0) ->
 def cross_correlation(input:IMG, conv_layer: conv_layer) -> IMG:
     conv_output = []
     for i in range(len(conv_layer["kernel"])):
-        conv_output.append(cross_corr_func(input, conv_layer["kernel"][i]) + conv_layer["bias"][i])
+        conv_output.append(cross_corr_func(input, conv_layer["kernel"][i]) + np.mean(conv_layer["bias"][i]))
     
     conv_output = np.array(conv_output)
     conv_output = activation(input=conv_output, activation=conv_layer["activation"])
@@ -185,7 +189,7 @@ def cross_correlation(input:IMG, conv_layer: conv_layer) -> IMG:
 
 
 def activation(input: IMG, activation: activation_funcs, derivative: bool = False) -> IMG:
-    if derivative:
+    if not derivative:
         if activation == "leaky":
             return Leaky_ReLU(input)
         elif activation == "relu":
@@ -210,14 +214,12 @@ def activation(input: IMG, activation: activation_funcs, derivative: bool = Fals
 # Loss functions
 
 def one_hot(true_labels) -> np.ndarray:
-    Y = true_labels.cpu().detach().numpy()
-    one_hot_Y = np.zeros((Y.size, Y.max() + 1))
-    one_hot_Y[np.arange(Y.size), Y] = 1
+    one_hot_Y = np.zeros((true_labels.size, 10))
+    one_hot_Y[np.arange(true_labels.size), true_labels] = 1
     one_hot_Y = one_hot_Y.T
     return one_hot_Y
 
 def binary_cross_entropy(true_labels: np.ndarray, predictions: np.ndarray) -> int:
-    true_labels = true_labels.cpu().detach().numpy()
     predictions = np.clip(predictions, 1e-7, 1 - 1e-7)
     term_0 = (1-true_labels) * np.log(1-predictions + 1e-7)
     term_1 = true_labels * np.log(predictions + 1e-7)

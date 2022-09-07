@@ -1,4 +1,4 @@
-from typing import Literal, Dict, List, TypedDict
+from typing import Literal, List, TypedDict
 import numpy as np
 
 IMG= np.ndarray
@@ -43,7 +43,7 @@ class fc_cache(TypedDict):
 class forward_cache(TypedDict):
     conv_cache: conv_cache 
     fc_cache: fc_cache 
-    loss: np.ndarray
+    loss: int
 
 class bconv_cache(TypedDict):
     kernel_derivs: KERNEL
@@ -69,69 +69,25 @@ class dataset(TypedDict):
 
 
 
-def create_type(class_type: type):
-    if class_type == conv_layer:
-        return {
-            "kernel": KERNEL,
-            "bias": KERNEL,
-            "activation": str,
-            "pooling": pooling
-        }
-        
-    if class_type == fc_layer:
-        return {}
-        weight: SCALARS
-        bias: SCALARS
-        activation: str
+def create_conv_cache() -> conv_cache:
+    new_conv_cache: conv_cache = {
+        "conv_inputs": [],
+        "last_output": np.array([])
+    }
+    return new_conv_cache
 
-    # Network
-    if class_type == network:
-        return {}
-        conv_layers: conv_layers
-        fc_layers: fc_layers
+def create_fc_cache() -> fc_cache:
+    new_fc_cache: fc_cache = {
+        "activation_outputs": [],
+        "layer_outputs": []
+    }
+    return new_fc_cache
 
 
-
-    # Caches
-    if class_type == conv_cache:
-        return {}
-        conv_inputs: IMG
-        last_output: IMG
-
-    if class_type == fc_cache:
-        return {}
-        activation_outputs: IMG #A
-        layer_outputs: IMG #Z
-
-    if class_type == forward_cache:
-        return {}
-        conv_cache: conv_cache 
-        fc_cache: fc_cache 
-        loss: np.ndarray
-
-    if class_type == bconv_cache:
-        return {}
-        kernel_derivs: KERNEL
-        bias_derivs: KERNEL
-
-    if class_type == bfc_cache:
-        return {}
-        weight_derivs: SCALARS
-        bias_derivs: SCALARS
-        last_deriv : SCALARS
-
-    if class_type == backward_cache:
-        return {}
-        bfc_cache: bfc_cache 
-        bconv_cache: bconv_cache 
-
-
-
-    # Dataset
-    if class_type == dataset:
-        return {}
-        name: str
-        input: IMG
-        target : SCALARS
-    
-
+def create_forward_cache() -> forward_cache:
+    new_forward_cache: forward_cache = {
+        "conv_cache" : create_conv_cache(),
+        "fc_cache" : create_fc_cache(),
+        "loss" : 0
+    }
+    return new_forward_cache
