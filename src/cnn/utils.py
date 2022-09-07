@@ -23,13 +23,13 @@ def get_dataset(train: bool) -> dataset:
     
     name = "MNIST_train" if train else "MNIST_test"
 
-    dataset: dataset = { 
+    net_dataset: dataset = { 
         "name": name, 
         "input": train_input, 
         "target": train_target
     }
 
-    return dataset
+    return net_dataset
 
 def set_numpy_settings():
     np.random.seed(0)
