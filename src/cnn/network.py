@@ -1,7 +1,7 @@
 from signal_func import prepare_img_to_LeNet5
 from type import *
 from layer import create_conv_layer, create_fc_layer,forward_prop, backward_prop, binary_cross_entropy
-
+from utils import plot_loss
 
 
 def create_LeNet5_network() -> network:
@@ -24,21 +24,24 @@ def create_LeNet5_network() -> network:
 
 
 
-def use_LeNet5(train: dataset, test:dataset, lenet5: network, epoch: int, learning_rate: int):
-    for i in range(epoch):
+def use_LeNet5(train: dataset, test:dataset, lenet5: network, epoch: int, learning_rate: int) -> List[int]:
+    for n in range(epoch):
+        print(f'{n}th epoch started in {epoch}!')
         for i in range(len(train["input"])):
+            
+            if i % 10000 == 0:
+                print(f'{i}th iteration started in {len(train["input"])}!')
+
             img: IMG = prepare_img_to_LeNet5(input = train["input"][i])
 
             net_forward_cache: forward_cache = forward_prop(input=img, network=lenet5)
 
-            net_forward_cache["loss"]:np.ndarray = binary_cross_entropy(true_labels= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1])
-
-            print("loss:", net_forward_cache["loss"])
+            LOSS.append(binary_cross_entropy(true_labels= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1]))
 
             lenet5 = backward_prop(forward_cache= net_forward_cache, network=lenet5, true_labels= train["target"][i], learning_rate= learning_rate)
 
 
-
+    return LOSS
 
 
 

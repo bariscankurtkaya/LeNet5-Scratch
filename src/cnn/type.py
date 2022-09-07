@@ -5,6 +5,8 @@ IMG= np.ndarray
 KERNEL= np.ndarray
 SCALARS= np.ndarray
 
+LOSS: List = []
+
 correlation_mode = Literal["full", "valid", "same"]
 boundary = Literal["fill", "wrap", "symm"]
 
@@ -48,6 +50,7 @@ class forward_cache(TypedDict):
 class bconv_cache(TypedDict):
     kernel_derivs: KERNEL
     bias_derivs: KERNEL
+    input_derivs: KERNEL
 
 class bfc_cache(TypedDict):
     weight_derivs: SCALARS
@@ -103,7 +106,8 @@ def create_bfc_cache() -> bfc_cache:
 def create_bconv_cache() -> bconv_cache:
     new_bconv_cache: bconv_cache = {
         "kernel_derivs": [],
-        "bias_derivs": []
+        "bias_derivs": [],
+        "input_derivs": []
     }
     return new_bconv_cache
 

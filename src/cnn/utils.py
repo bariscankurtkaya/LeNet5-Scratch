@@ -3,6 +3,9 @@ from type import dataset
 from  torchvision import datasets
 from torchvision.transforms import ToTensor
 import numpy as np
+import matplotlib.pyplot as plt
+from typing import List 
+import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Rotation Invariance CNN')
@@ -34,3 +37,21 @@ def get_dataset(train: bool) -> dataset:
 def set_numpy_settings():
     np.random.seed(0)
     np.seterr(invalid="ignore", over = "ignore")
+
+
+def plot_loss(loss: List[int]):
+
+    average_loss = average(loss)
+    plt.plot(loss)
+    plt.savefig(os.path.join(os.path.dirname(__file__), "loss.png"))
+
+    plt.plot(average_loss)
+    plt.savefig(os.path.join(os.path.dirname(__file__), "average_loss.png"))
+
+
+def average(arr):
+  average_arr = []
+  for i in range(int(len(arr)/100)):
+      average_arr.append(np.average(arr[i*100:(i+1)*100]))
+  return average_arr
+

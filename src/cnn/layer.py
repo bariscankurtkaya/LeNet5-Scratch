@@ -91,23 +91,28 @@ def backward_prop_conv(backward_cache: backward_cache, conv_cache: conv_cache, c
 
     dZ0 = np.dot(backward_cache["bfc_cache"]["weight_derivs"][-1].T, (backward_cache["bfc_cache"]["last_deriv"])) * activation(input = conv_cache["last_output"], activation= conv_layers[-1]["activation"], derivative=True)
     
-    dZ0 = flatten_2_kernel(dZ0.T)[0]
-    
+    conv_output_deriv = flatten_2_kernel(dZ0.T)[0]
+
     for n in range(len(conv_layers)):
         if conv_layers[-n-1]["pooling"] is not None:
-            conv_output_deriv = upsampling(dZ0)
+            conv_output_deriv = upsampling(conv_output_deriv)
         kernel_deriv = np.zeros(conv_layers[-n-1]["kernel"].shape)
         
-        bias_deriv = conv_output_deriv
-        print(conv_output_deriv.shape) #Bias shape sikintili
+        input_size = round(len(conv_cache["conv_inputs"][-n-1][0]))
+        input_channel = round(len(conv_cache["conv_inputs"][-n-1]))
+        net_bconv_cache["input_derivs"].append(np.zeros((input_channel, input_size, input_size)))
+
+        bias_deriv = np.array([np.mean(np.mean(conv_output_deriv, axis= 2), axis= 1)]).T # I think bias should use mean of conv output derivative
+
         for i in range(len(conv_layers[-n-1]["kernel"])):
             for j in range(len(conv_layers[-n-1]["kernel"][i])):
                 kernel_deriv[i][j] = cross_corr_func(conv_cache["conv_inputs"][-n-1][j], conv_output_deriv[i])
-                conv_output_deriv[j] = convolution_func(conv_output_deriv[i], conv_layers[-n-1]["kernel"][i][j]) * activation(input = conv_cache["conv_inputs"][-n-1], activation= conv_layers[-n-1]["activation"], derivative=True)
+                net_bconv_cache["input_derivs"][n][j] = convolution_func(conv_output_deriv[i], conv_layers[-n-1]["kernel"][i][j]) * activation(input = conv_cache["conv_inputs"][-n-1][j], activation= conv_layers[-n-1]["activation"], derivative=True)
             
-        net_bconv_cache[n]["kernel_derivs"] = kernel_deriv
-        net_bconv_cache[n]["bias_derivs"] = bias_deriv
+        net_bconv_cache["kernel_derivs"].append(kernel_deriv)
+        net_bconv_cache["bias_derivs"].append(bias_deriv)
 
+        conv_output_deriv = net_bconv_cache["input_derivs"][n]
     return net_bconv_cache
 
 
@@ -128,7 +133,7 @@ def update_params(backward_cache: backward_cache, network:network, learning_rate
 def create_conv_layer(kernel_count:int, kernel_channel:int, kernel_size:int, activation:activation_funcs, pooling:pooling) -> conv_layer:
     net_conv_layer: conv_layer = {
         "kernel": np.random.rand(kernel_count, kernel_channel, kernel_size, kernel_size),
-        "bias": np.random.rand(kernel_count, kernel_size, kernel_size),
+        "bias": np.random.rand(kernel_count, 1),
         "activation": activation,
         "pooling": pooling
     }
@@ -223,4 +228,5 @@ def binary_cross_entropy(true_labels: np.ndarray, predictions: np.ndarray) -> in
     predictions = np.clip(predictions, 1e-7, 1 - 1e-7)
     term_0 = (1-true_labels) * np.log(1-predictions + 1e-7)
     term_1 = true_labels * np.log(predictions + 1e-7)
-    return -np.mean(term_0+term_1, axis=0)
+    loss = -np.mean(term_0+term_1, axis=0)
+    return loss

@@ -54,6 +54,6 @@ def flatten_2_kernel(x):
     return x
 
 
-def upsampling(x):
-    x = x.repeat(2, axis=1).repeat(2, axis=2)
+def upsampling(x, upkernel_size: int = 2):
+    x = x.repeat(upkernel_size, axis=1).repeat(upkernel_size, axis=2)
     return x
