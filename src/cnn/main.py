@@ -1,6 +1,6 @@
 from utils import *
 from type import *
-from new_network import create_LeNet5_network, use_LeNet5
+from network import create_LeNet5_network, use_LeNet5
 
 args = parse_args()
 EPOCH = args.epoch
