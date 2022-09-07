@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 dataset
 
-src/mine_cnn/data
+src/cnn/data
