@@ -20,7 +20,7 @@ def forward_prop(input: IMG, network: network) -> forward_cache:
 def forward_prop_conv(input: IMG, conv_layers:List[conv_layer]) -> conv_cache:
     net_conv_cache : conv_cache
     for i in range(len(conv_layers)):
-        net_conv_cache["conv_inputs"].append(input)
+        net_conv_cache["conv_inputs"][i] = input
 
         output: np.ndarray = cross_correlation(input, conv_layers[i])
         input = output
