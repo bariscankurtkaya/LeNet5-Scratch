@@ -46,18 +46,22 @@ def forward_prop_fc(input: IMG, fc_layers:fc_layers) -> fc_cache:
 
 # Backward Functions
 
-def backward_prop(forward_cache: forward_cache, network: network, true_labels):
+def backward_prop(forward_cache: forward_cache, network: network, true_labels, learning_rate: int) -> network:
     backward_cache: backward_cache
     true_labels = one_hot(true_labels)
 
     backward_cache["bfc_cache"] = backward_prop_fc(forward_cache= forward_cache, fc_layers= network["fc_layers"], true_labels= true_labels)
     
-    return
+    backward_cache["bconv_cache"] = backward_prop_conv(backward_cache=backward_cache,conv_cache=forward_cache["conv_cache"], conv_layers= network["conv_layers"])
+    
+    network = update_params(backward_cache= backward_cache, network=network, learning_rate=learning_rate)
+
+    return network
 
 
 
 
-def backward_prop_fc(forward_cache: forward_cache, fc_layers: fc_layers, true_labels= np.ndarray) -> bfc_cache:
+def backward_prop_fc(forward_cache: forward_cache, fc_layers: fc_layers, true_labels: np.ndarray) -> bfc_cache:
     bfc_cache : bfc_cache
     for i in range(len(fc_layers)):
         if i == 0:
@@ -72,16 +76,47 @@ def backward_prop_fc(forward_cache: forward_cache, fc_layers: fc_layers, true_la
         
         bfc_cache["bias"][i] = 1/len(true_labels[0]) * np.sum(dZ)
 
-    bfc_cache["last_deriv"] = dZ
+    bfc_cache["last_deriv"] = dZ #dZ1
 
     return bfc_cache
 
 
 
 
-def backward_prop_conv():
-    return
+def backward_prop_conv(backward_cache: backward_cache, conv_cache: conv_cache, conv_layers: conv_layers) -> bconv_cache:
+    bconv_cache: bconv_cache
 
+    dZ0 = np.dot(backward_cache["bfc_cache"]["weight"][-1].T, (backward_cache["bfc_cache"]["last_deriv"])) * activation(input = conv_cache["last_output"], activation= conv_layers[-1]["activation"], derivative=True)
+    
+    dZ0 = flatten_2_kernel(dZ0.T)
+
+    for n in range(len(conv_layers)):
+        if conv_layers[-n-1]["pooling"] is not None:
+            conv_output_deriv = upsampling(dZ0[0])
+        kernel_deriv = np.zeros(conv_layers[-n-1]["kernel"].shape)
+
+        bias_deriv = conv_output_deriv
+        for i in range(len(conv_layers[-n-1]["kernel"])):
+            for j in range(len(conv_layers[-n-1]["kernel"][i])):
+                kernel_deriv[i][j] = cross_corr_func(conv_cache["conv_inputs"][-n-1][j], conv_output_deriv[i])
+                conv_output_deriv[j] = convolution_func(conv_output_deriv[i], conv_layers[-n-1]["kernel"][i][j]) * activation(input = conv_cache["conv_inputs"][-n-1], activation= conv_layers[-n-1]["activation"], derivative=True)
+            
+        bconv_cache[n]["kernel_derivs"] = kernel_deriv
+        bconv_cache[n]["bias_derivs"] = bias_deriv
+
+    return bconv_cache
+
+
+def update_params(backward_cache: backward_cache, network:network, learning_rate:int) -> network:
+    for i in range(len(network["conv_layers"])):
+        network["conv_layers"][i]["kernel"] = network["conv_layers"][i]["kernel"] - learning_rate * backward_cache["bconv_cache"]["kernel_derivs"][-i-1]
+        network["conv_layers"][i]["bias"] = network["conv_layers"][i]["bias"] - learning_rate * backward_cache["bconv_cache"]["bias_derivs"][-i-1]
+    
+    for i in range(len(network["fc_layers"])):
+        network["fc_layers"][i]["weight"] = network["fc_layers"][i]["weight"] - learning_rate * backward_cache["bfc_cache"]["weight_derivs"][-i-1]
+        network["fc_layers"][i]["bias"] = network["fc_layers"][i]["bias"] - learning_rate * backward_cache["bfc_cache"]["bias_derivs"][-i-1]
+    
+    return network
 
 
 

@@ -48,3 +48,12 @@ def prepare_img_to_LeNet5(input:IMG) -> IMG:
     input = padding_func(np.array(input))
 
     return input
+
+def flatten_2_kernel(x):
+    x = np.reshape(x, (len(x),16,5,5))
+    return x
+
+
+def upsampling(x):
+    x = x.repeat(2, axis=1).repeat(2, axis=2)
+    return x
