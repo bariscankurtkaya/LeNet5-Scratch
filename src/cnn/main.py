@@ -8,9 +8,6 @@ np.seterr(invalid="ignore", over = "ignore")
 
 test_dataset = datasets.MNIST(root="data", train=False, transform= ToTensor(), download= True)
 
-args = parse_args()
-EPOCH = args.epoch
-
 
 
 test_input = test_dataset.data.view(-1, 1, 28, 28).float()

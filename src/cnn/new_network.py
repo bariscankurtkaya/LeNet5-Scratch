@@ -1,22 +1,45 @@
-from signal_func import *
-import numpy as np
-from math_eq import * 
+from signal_func import prepare_img_to_LeNet5
 from type import *
-
-def cross_correlation(input, conv_kernel, conv_bias) -> np.ndarray:
-    conv_output = []
-    for i in range(len(conv_kernel)):
-        conv_output.append(cross_corr_func(input, conv_kernel[i]) + conv_bias[i]) 
-
-    return np.array(conv_output)
-
-def max_pool(input, kernel_size, stride, padding) -> np.ndarray:
-    max_pool_output = []
-    for i in range(len(input)):
-        max_pool_output.append(pool2d(input[i][0], kernel_size = kernel_size, stride = stride, padding = padding, pool_mode = "max"))
-    
-    return np.array(max_pool_output)
+from layer import create_conv_layer, create_fc_layer,forward_prop, backward_prop, binary_cross_entropy
 
 
-def create_LeNet5_network():
-    
+
+def create_LeNet5_network() -> network:
+    conv1: conv_layer = create_conv_layer(kernel_count=6, kernel_channel=1, kernel_size=5, activation="leaky", pooling="max")
+    conv2: conv_layer = create_conv_layer(kernel_count=16, kernel_channel=6, kernel_size=5, activation="leaky", pooling="max")
+
+    fc1: fc_layer = create_fc_layer(input_size=400, output_size=120, activation="leaky")
+    fc2: fc_layer = create_fc_layer(input_size=120, output_size=84, activation="leaky")
+    fc3: fc_layer = create_fc_layer(input_size=84, output_size=10, activation="softmax")
+
+    conv_layers: conv_layers = [conv1, conv2]
+    fc_layers: fc_layers = [fc1, fc2, fc3]
+
+    lenet5: network = {
+        "conv_layers": conv_layers,
+        "fc_layers": fc_layers
+    }
+
+    return lenet5
+
+
+
+def use_LeNet5(train: dataset, test:dataset, lenet5: network, epoch: int):
+    for i in range(epoch):
+        for i in range(len(train["input"])):
+            img: IMG = prepare_img_to_LeNet5(input = train["input"][i])
+
+            forward_cache: forward_cache = forward_prop(input=img, network=lenet5)
+
+            forward_cache["loss"]:np.ndarray = binary_cross_entropy(true_labels= train["target"][i], predictions=forward_cache["fc_cache"]["activation_outputs"][-1])
+
+            backward_cache: backward_cache = backward_prop(forward_cache= forward_cache, network=lenet5, true_labels= train["target"][i])
+
+
+
+
+
+
+
+
+

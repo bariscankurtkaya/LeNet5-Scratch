@@ -1,7 +1,7 @@
 from signal_func import cross_corr_func, pool2d, convolution_func
 import numpy as np
 
-def convolution(input, conv_kernel, conv_bias):
+def cross_correlation(input, conv_kernel, conv_bias):
     #print("input:", input.shape, "conv: ", conv_kernel.shape)
     conv_output = []
     for i in range(len(conv_kernel)):

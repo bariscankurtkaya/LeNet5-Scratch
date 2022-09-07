@@ -1,44 +1,50 @@
 from scipy import signal
-from type import correlation_mode, boundary
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-import cv2 as cv
+from type import *
 
 
-def cross_corr_func(matrix: np.ndarray, kernel: np.ndarray, mode="valid") -> np.ndarray:
-    return signal.correlate(matrix, kernel, mode)
+def cross_corr_func(img: IMG, kernel: np.ndarray, mode="valid") -> np.ndarray:
+    return signal.correlate(img, kernel, mode)
 
-def convolution_func(matrix: np.ndarray, kernel: np.ndarray, mode="full") -> np.ndarray:
-    return signal.convolve(matrix, kernel, mode)
+def convolution_func(img: IMG, kernel: np.ndarray, mode="full") -> np.ndarray:
+    return signal.convolve(img, kernel, mode)
 
-def pool2d(A, kernel_size, stride, padding=0, pool_mode='max'):
+def pool2d(img:IMG, kernel_size: int, stride:int = 2, padding:int = 0, pool_mode:str='max') -> np.ndarray:
     """
     2D Pooling
 
     Parameters:
-        A: input 2D array
+        img: input 2D array
         kernel_size: int, the size of the window over which we take pool
         stride: int, the stride of the window
         padding: int, implicit zero paddings on both sides of the input
         pool_mode: string, 'max' or 'avg'
     """
     # Padding
-    A = np.pad(A, padding, mode='constant')
+    img = padding_func(img, padding=padding)
 
-    # Window view of A
-    output_shape = ((A.shape[0] - kernel_size) // stride + 1,
-                    (A.shape[1] - kernel_size) // stride + 1)
+    # Window view of img
+    output_shape = ((img.shape[0] - kernel_size) // stride + 1,
+                    (img.shape[1] - kernel_size) // stride + 1)
     
     shape_w = (output_shape[0], output_shape[1], kernel_size, kernel_size)
-    strides_w = (stride*A.strides[0], stride*A.strides[1], A.strides[0], A.strides[1])
+    strides_w = (stride*img.strides[0], stride*img.strides[1], img.strides[0], img.strides[1])
     
-    A_w = as_strided(A, shape_w, strides_w)
+    img_w = as_strided(img, shape_w, strides_w)
 
     # Return the result of pooling
     if pool_mode == 'max':
-        return A_w.max(axis=(2, 3))
+        return img_w.max(axis=(2, 3))
     elif pool_mode == 'avg':
-        return A_w.mean(axis=(2, 3))
+        return img_w.mean(axis=(2, 3))
 
-def integral_img(img: np.ndarray) -> np.ndarray:
-    return cv.integral(img)
+def padding_func(img: IMG, padding:int = 2, mode:str = "constant") ->IMG:
+    return np.pad(img, padding, mode=mode)
+
+
+def prepare_img_to_LeNet5(input:IMG) -> IMG:
+    input = input / 255
+    input = padding_func(np.array(input))
+
+    return input
