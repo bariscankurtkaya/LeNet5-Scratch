@@ -5,10 +5,10 @@ from type import *
 
 
 def cross_corr_func(img: IMG, kernel: np.ndarray, mode="valid") -> np.ndarray:
-    return signal.correlate(img, kernel, mode)
+    return signal.correlate(img, kernel, mode) / kernel.size
 
 def convolution_func(img: IMG, kernel: np.ndarray, mode="full") -> np.ndarray:
-    return signal.convolve(img, kernel, mode)
+    return signal.convolve(img, kernel, mode) / kernel.size
 
 def pool2d(img:IMG, kernel_size: int, stride:int = 2, padding:int = 0, pool_mode:str='max') -> np.ndarray:
     """
