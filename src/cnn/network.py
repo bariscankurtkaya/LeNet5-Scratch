@@ -8,8 +8,7 @@ def create_LeNet5_network() -> network:
     conv1: conv_layer = create_conv_layer(kernel_count=6, kernel_channel=1, kernel_size=5, activation="leaky", pooling="max")
     conv2: conv_layer = create_conv_layer(kernel_count=16, kernel_channel=6, kernel_size=5, activation="leaky", pooling="max")
 
-    #fc1: fc_layer = create_fc_layer(input_size=400, output_size=120, activation="leaky")
-    fc1: fc_layer = create_fc_layer(input_size=1024, output_size=120, activation="leaky")
+    fc1: fc_layer = create_fc_layer(input_size=400, output_size=120, activation="leaky")
     fc2: fc_layer = create_fc_layer(input_size=120, output_size=84, activation="leaky")
     fc3: fc_layer = create_fc_layer(input_size=84, output_size=10, activation="softmax")
 
@@ -40,12 +39,12 @@ def create_fc_network() -> network:
 
     return fc_network
 
-def train_network(train: dataset, test:dataset, network: network) -> List[int]:
-    for n in range(EPOCH):
-        print(f'{n}th epoch started in {EPOCH}!')
+def train_network(train: dataset, test:dataset, network: network,  hyperparameter:hyperparameters) -> List[int]:
+    for n in range(hyperparameter["epoch"]):
+        print(f'{n}th epoch started in {hyperparameter["epoch"]}!')
         for i in range(len(train["input"])):
             
-            if i % SAVE_COUNT == 0:
+            if i % hyperparameter["save_count"] == 0:
                 print(f'{i}th iteration started in {len(train["input"])}!')
                 if i != 0:
                     save_avg_and_delete()
@@ -60,11 +59,10 @@ def train_network(train: dataset, test:dataset, network: network) -> List[int]:
 
             LOSS.append(binary_cross_entropy(true_label= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1]))
 
-            network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], input=img)
+            network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], input=img, hyperparameter=hyperparameter)
             del net_forward_cache
 
-    return network, LOSS_average
-
+    return network, LOSS_AVERAGE
 
 
 

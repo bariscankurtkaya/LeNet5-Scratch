@@ -1,21 +1,17 @@
-from typing import Literal, List, TypedDict
+from typing import Literal, List, Type, TypedDict
 import numpy as np
+import argparse
 
 IMG= np.ndarray
 KERNEL= np.ndarray
 SCALARS= np.ndarray
 
-SAVE_COUNT: int
-EPOCH: int
-LEARNING_RATE:int
-
 MIN_LOSS: int = 100
-
-CURRENT_LOSS: int
-
+CURRENT_LOSS: int = 100
 
 LOSS: List = []
-LOSS_average: List = []
+LOSS_AVERAGE: List = []
+
 
 
 correlation_mode = Literal["full", "valid", "same"]
@@ -44,6 +40,10 @@ class network(TypedDict):
     fc_layers: List[fc_layer]
 
 
+class hyperparameters(TypedDict):
+    epoch: int
+    learning_rate: int
+    save_count: int
 
 # Caches
 class conv_cache(TypedDict):
@@ -129,3 +129,24 @@ def create_backward_cache() -> backward_cache:
         "bconv_cache": create_bconv_cache
     }
     return new_backward_cache
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Rotation Invariance CNN')
+
+    parser.add_argument("--epoch", default=10, type=int)
+    parser.add_argument("--learning_rate", default=0.003, type=int)
+    parser.add_argument("--model", default="lenet5", type=str)
+    parser.add_argument("--save_count", default=1000, type=int)
+
+
+    args = parser.parse_args()
+    return args
+
+def set_hyperparameter(args):
+    hyperparameter: hyperparameters = {
+        "epoch": args.epoch,
+        "learning_rate": args.learning_rate,
+        "save_count" : args.save_count
+    }
+    return hyperparameter

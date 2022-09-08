@@ -1,5 +1,4 @@
-import argparse
-from type import dataset, LOSS_average, LOSS, MIN_LOSS, network, CURRENT_LOSS
+from type import dataset, LOSS_AVERAGE, LOSS, MIN_LOSS, network, CURRENT_LOSS
 from  torchvision import datasets
 from torchvision.transforms import ToTensor
 import numpy as np
@@ -8,18 +7,6 @@ from typing import List
 import os
 import csv
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Rotation Invariance CNN')
-
-    parser.add_argument("--epoch", default=10, type=int)
-    parser.add_argument("--learning_rate", default=0.003, type=int)
-    parser.add_argument("--model", default="lenet5", type=str)
-    parser.add_argument("--save_count", default=1000, type=int)
-
-
-    args = parser.parse_args()
-    return args
 
 def get_dataset(train: bool) -> dataset:
 
@@ -55,15 +42,20 @@ def average(arr: np.ndarray) -> int:
     return np.average(arr[0:1000])
    
 def save_avg_and_delete():
+    global LOSS, CURRENT_LOSS, LOSS_AVERAGE
+
     CURRENT_LOSS = average(LOSS)
-    LOSS_average.append(CURRENT_LOSS)
-    plot_loss(LOSS_average)
+    LOSS_AVERAGE.append(CURRENT_LOSS)
+    plot_loss(LOSS_AVERAGE)
     LOSS.clear()
 
 
-def check_best_model(network: network):
-    if MIN_LOSS > CURRENT_LOSS and (MIN_LOSS / CURRENT_LOSS) > 5:
-        save_model(network)
+def check_best_model():
+    global MIN_LOSS
+
+    if MIN_LOSS > CURRENT_LOSS :
+        print("MIN LOSS: ", MIN_LOSS)
+        MIN_LOSS = CURRENT_LOSS
 
 
 def save_model(network: network):

@@ -1,12 +1,10 @@
 from utils import *
-from type import *
+from type import hyperparameters, parse_args, set_hyperparameter
 from network import create_LeNet5_network, create_fc_network, train_network
 
 args = parse_args()
-EPOCH = args.epoch
-LEARNING_RATE = args.learning_rate
+hyperparameter: hyperparameters = set_hyperparameter(args)
 MODEL = args.model
-SAVE_COUNT = args.save_count
 
 set_numpy_settings()
 
@@ -19,7 +17,7 @@ elif MODEL == "fully":
     new_network: network = create_fc_network()
 
 
-new_network, loss = train_network(train= train, test=test, network=new_network)
+new_network, loss = train_network(train= train, test=test, network=new_network, hyperparameter=hyperparameter)
 
 plot_loss(loss)
 save_model(new_network)
