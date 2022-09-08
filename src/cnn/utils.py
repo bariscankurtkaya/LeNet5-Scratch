@@ -1,11 +1,13 @@
 import argparse
-from type import dataset 
+from type import dataset, LOSS_average, LOSS, MIN_LOSS, network, CURRENT_LOSS
 from  torchvision import datasets
 from torchvision.transforms import ToTensor
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List 
 import os
+import csv
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Rotation Invariance CNN')
@@ -13,6 +15,8 @@ def parse_args():
     parser.add_argument("--epoch", default=10, type=int)
     parser.add_argument("--learning_rate", default=0.003, type=int)
     parser.add_argument("--model", default="lenet5", type=str)
+    parser.add_argument("--save_count", default=1000, type=int)
+
 
     args = parser.parse_args()
     return args
@@ -50,4 +54,24 @@ def plot_loss(average_loss: List[int]):
 def average(arr: np.ndarray) -> int:
     return np.average(arr[0:1000])
    
+def save_avg_and_delete():
+    CURRENT_LOSS = average(LOSS)
+    LOSS_average.append(CURRENT_LOSS)
+    plot_loss(LOSS_average)
+    LOSS.clear()
 
+
+def check_best_model(network: network):
+    if MIN_LOSS > CURRENT_LOSS and (MIN_LOSS / CURRENT_LOSS) > 5:
+        save_model(network)
+
+
+def save_model(network: network):
+    # open file for writing, "w" is writing
+    w = csv.writer(open("model.csv", "w"))
+
+    # loop over dictionary keys and values
+    for key, val in network.items():
+
+        # write every key and value to file
+        w.writerow([key, val])

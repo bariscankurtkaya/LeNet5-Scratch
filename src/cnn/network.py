@@ -1,7 +1,7 @@
 from signal_func import prepare_img_to_LeNet5, prepare_to_fc_network
 from type import *
 from layer import create_conv_layer, create_fc_layer,forward_prop, backward_prop, binary_cross_entropy
-from utils import plot_loss, average
+from utils import save_avg_and_delete
 
 
 def create_LeNet5_network() -> network:
@@ -40,18 +40,17 @@ def create_fc_network() -> network:
 
     return fc_network
 
-def train_network(train: dataset, test:dataset, network: network, epoch: int, learning_rate: int) -> List[int]:
-    for n in range(epoch):
-        print(f'{n}th epoch started in {epoch}!')
+def train_network(train: dataset, test:dataset, network: network) -> List[int]:
+    for n in range(EPOCH):
+        print(f'{n}th epoch started in {EPOCH}!')
         for i in range(len(train["input"])):
             
-            if i % 1000 == 0 or i == 6000:
+            if i % SAVE_COUNT == 0:
                 print(f'{i}th iteration started in {len(train["input"])}!')
                 if i != 0:
-                    LOSS_average.append(average(LOSS))
-                    plot_loss(LOSS_average)
-                LOSS = []
+                    save_avg_and_delete()
 
+            
             if network["name"] == "lenet5":
                 img: IMG = prepare_img_to_LeNet5(img = train["input"][i])
             if network["name"] == "fully":
@@ -61,10 +60,10 @@ def train_network(train: dataset, test:dataset, network: network, epoch: int, le
 
             LOSS.append(binary_cross_entropy(true_label= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1]))
 
-            network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], learning_rate= learning_rate, input=img)
+            network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], input=img)
             del net_forward_cache
 
-    return LOSS_average
+    return network, LOSS_average
 
 
 

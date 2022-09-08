@@ -5,8 +5,18 @@ IMG= np.ndarray
 KERNEL= np.ndarray
 SCALARS= np.ndarray
 
+SAVE_COUNT: int
+EPOCH: int
+LEARNING_RATE:int
+
+MIN_LOSS: int = 100
+
+CURRENT_LOSS: int
+
+
 LOSS: List = []
 LOSS_average: List = []
+
 
 correlation_mode = Literal["full", "valid", "same"]
 boundary = Literal["fill", "wrap", "symm"]
