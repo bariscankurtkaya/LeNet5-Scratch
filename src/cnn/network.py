@@ -41,14 +41,28 @@ def create_fc_network() -> network:
 
 def train_network(train: dataset, test:dataset, network: network,  hyperparameter:hyperparameters) -> List[int]:
     for n in range(hyperparameter["epoch"]):
+        
+        randomize = np.arange(len(train["input"]))
+        np.random.shuffle(randomize)
+        train["input"] = train["input"][randomize]
+        train["target"] = train["target"][randomize]
+
+        # Experiment
         print(f'{n}th epoch started in {hyperparameter["epoch"]}!')
+        if n != 0:
+            hyperparameter["learning_rate"] * (0.9 ** 58)
+        ##########
+
+
         for i in range(len(train["input"])):
             
+            # Experiment
             if i % hyperparameter["save_count"] == 0:
                 print(f'{i}th iteration started in {len(train["input"])}!')
                 if i != 0:
                     save_avg_and_delete()
-
+                    hyperparameter["learning_rate"] = hyperparameter["learning_rate"] * 0.9
+            ##########
             
             if network["name"] == "lenet5":
                 img: IMG = prepare_img_to_LeNet5(img = train["input"][i])
@@ -57,6 +71,7 @@ def train_network(train: dataset, test:dataset, network: network,  hyperparamete
 
             net_forward_cache: forward_cache = forward_prop(input=img, network=network)
 
+            print(i, "th : ", train["target"][i] ," --", np.argmax(net_forward_cache["fc_cache"]["activation_outputs"][-1]), np.max(net_forward_cache["fc_cache"]["activation_outputs"][-1]))
             LOSS.append(binary_cross_entropy(true_label= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1]))
 
             network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], input=img, hyperparameter=hyperparameter)
