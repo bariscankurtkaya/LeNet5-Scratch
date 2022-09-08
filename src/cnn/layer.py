@@ -8,10 +8,13 @@ from math_eq import *
 # Forward Functions
 def forward_prop(input: IMG, network: network) -> forward_cache:
     net_forward_cache : forward_cache = create_forward_cache()
+    
+    if network["name"] == "lenet5":
+        net_forward_cache["conv_cache"] = forward_prop_conv(input=input, conv_layers=network["conv_layers"])
+        net_forward_cache["fc_cache"] = forward_prop_fc(input = net_forward_cache["conv_cache"]["last_output"], fc_layers=network["fc_layers"])
 
-    net_forward_cache["conv_cache"] = forward_prop_conv(input=input, conv_layers=network["conv_layers"])
-
-    net_forward_cache["fc_cache"] = forward_prop_fc(input = net_forward_cache["conv_cache"]["last_output"], fc_layers=network["fc_layers"])
+    elif network["name"] == "fully":
+        net_forward_cache["fc_cache"] = forward_prop_fc(input = input, fc_layers=network["fc_layers"])
 
     return net_forward_cache
 
@@ -49,22 +52,23 @@ def forward_prop_fc(input: IMG, fc_layers:List[fc_layer]) -> fc_cache:
 
 # Backward Functions
 
-def backward_prop(forward_cache: forward_cache, network: network, true_labels, learning_rate: int) -> network:
+def backward_prop(forward_cache: forward_cache, network: network, true_labels, learning_rate: int, input: IMG) -> network:
     net_backward_cache: backward_cache = create_backward_cache()
     true_labels = one_hot(true_labels)
 
-    net_backward_cache["bfc_cache"] = backward_prop_fc(forward_cache= forward_cache, fc_layers= network["fc_layers"], true_labels= true_labels)
+    net_backward_cache["bfc_cache"] = backward_prop_fc(forward_cache= forward_cache, fc_layers= network["fc_layers"], true_labels= true_labels, input=input)
 
-    net_backward_cache["bconv_cache"] = backward_prop_conv(backward_cache=net_backward_cache,conv_cache=forward_cache["conv_cache"], conv_layers= network["conv_layers"])
+    if network["name"] == "lenet5":
+        net_backward_cache["bconv_cache"] = backward_prop_conv(backward_cache=net_backward_cache,conv_cache=forward_cache["conv_cache"], conv_layers= network["conv_layers"])
     
     network = update_params(backward_cache= net_backward_cache, network=network, learning_rate=learning_rate)
-
+    del net_backward_cache
     return network
 
 
 
 
-def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], true_labels: np.ndarray) -> bfc_cache:
+def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], true_labels: np.ndarray, input:IMG) -> bfc_cache:
     net_bfc_cache : bfc_cache = create_bfc_cache()
     for i in range(len(fc_layers)):
         if i == 0:
@@ -75,7 +79,9 @@ def backward_prop_fc(forward_cache: forward_cache, fc_layers: List[fc_layer], tr
         if i+1 < len(fc_layers):
             net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(forward_cache["fc_cache"]["activation_outputs"][-i-2].T))
         else:
-            net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(forward_cache["conv_cache"]["last_output"].T))
+            #net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(forward_cache["conv_cache"]["last_output"].T))
+            net_bfc_cache["weight_derivs"].append(1/len(true_labels[0]) * dZ.dot(input.T))
+
         
         net_bfc_cache["bias_derivs"].append(1/len(true_labels[0]) * np.sum(dZ))
 
@@ -117,9 +123,10 @@ def backward_prop_conv(backward_cache: backward_cache, conv_cache: conv_cache, c
 
 
 def update_params(backward_cache: backward_cache, network:network, learning_rate:int) -> network:
-    for i in range(len(network["conv_layers"])):
-        network["conv_layers"][i]["kernel"] = network["conv_layers"][i]["kernel"] - learning_rate * backward_cache["bconv_cache"]["kernel_derivs"][-i-1]
-        network["conv_layers"][i]["bias"] = network["conv_layers"][i]["bias"] - learning_rate * backward_cache["bconv_cache"]["bias_derivs"][-i-1]
+    if network["name"] == "lenet5":
+        for i in range(len(network["conv_layers"])):
+            network["conv_layers"][i]["kernel"] = network["conv_layers"][i]["kernel"] - learning_rate * backward_cache["bconv_cache"]["kernel_derivs"][-i-1]
+            network["conv_layers"][i]["bias"] = network["conv_layers"][i]["bias"] - learning_rate * backward_cache["bconv_cache"]["bias_derivs"][-i-1]
     
     for i in range(len(network["fc_layers"])):
         network["fc_layers"][i]["weight"] = network["fc_layers"][i]["weight"] - learning_rate * backward_cache["bfc_cache"]["weight_derivs"][-i-1]
@@ -224,9 +231,12 @@ def one_hot(true_labels) -> np.ndarray:
     one_hot_Y = one_hot_Y.T
     return one_hot_Y
 
-def binary_cross_entropy(true_labels: np.ndarray, predictions: np.ndarray) -> int:
+def binary_cross_entropy(true_label: np.ndarray, predictions: np.ndarray) -> int:
     predictions = np.clip(predictions, 1e-7, 1 - 1e-7)
+    true_labels = one_hot(true_label)
     term_0 = (1-true_labels) * np.log(1-predictions + 1e-7)
     term_1 = true_labels * np.log(predictions + 1e-7)
     loss = -np.mean(term_0+term_1, axis=0)
+
+    del true_labels, term_0, term_1
     return loss

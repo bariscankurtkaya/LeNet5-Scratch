@@ -12,7 +12,7 @@ def parse_args():
 
     parser.add_argument("--epoch", default=10, type=int)
     parser.add_argument("--learning_rate", default=0.003, type=int)
-
+    parser.add_argument("--model", default="lenet5", type=str)
 
     args = parser.parse_args()
     return args
@@ -39,19 +39,15 @@ def set_numpy_settings():
     np.seterr(invalid="ignore", over = "ignore")
 
 
-def plot_loss(loss: List[int]):
-
-    average_loss = average(loss)
-    plt.plot(loss)
-    plt.savefig(os.path.join(os.path.dirname(__file__), "loss.png"))
-
-    plt.plot(average_loss)
-    plt.savefig(os.path.join(os.path.dirname(__file__), "average_loss.png"))
+def plot_loss(average_loss: List[int]):
+    fig, ax = plt.subplots()
+    ax.plot(average_loss)
+    fig.savefig(os.path.join(os.path.dirname(__file__), "average_loss.png"))
+    plt.close()
 
 
-def average(arr):
-  average_arr = []
-  for i in range(int(len(arr)/100)):
-      average_arr.append(np.average(arr[i*100:(i+1)*100]))
-  return average_arr
+
+def average(arr: np.ndarray) -> int:
+    return np.average(arr[0:1000])
+   
 

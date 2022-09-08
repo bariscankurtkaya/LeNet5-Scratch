@@ -130,3 +130,4 @@ dmypy.json
 dataset
 
 src/cnn/data
+src/cnn/average_loss.png

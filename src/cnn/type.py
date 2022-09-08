@@ -6,6 +6,7 @@ KERNEL= np.ndarray
 SCALARS= np.ndarray
 
 LOSS: List = []
+LOSS_average: List = []
 
 correlation_mode = Literal["full", "valid", "same"]
 boundary = Literal["fill", "wrap", "symm"]
@@ -28,6 +29,7 @@ class fc_layer(TypedDict):
 
 # Network
 class network(TypedDict):
+    name: str
     conv_layers: List[conv_layer]
     fc_layers: List[fc_layer]
 

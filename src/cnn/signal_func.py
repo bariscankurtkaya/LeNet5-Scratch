@@ -43,11 +43,16 @@ def padding_func(img: IMG, padding:int = 2, mode:str = "constant") ->IMG:
     return np.pad(img, padding, mode=mode)
 
 
-def prepare_img_to_LeNet5(input:IMG) -> IMG:
-    input = input / 255
-    input = padding_func(np.array(input))
+def prepare_img_to_LeNet5(img:IMG) -> IMG:
+    img = img / 255
+    img = padding_func(np.array(img[0]))
+    img = np.array([img])
+    return img
 
-    return input
+def prepare_to_fc_network(img: IMG) -> IMG:
+    img: IMG = prepare_img_to_LeNet5(img = img)
+    img = np.array([img.flatten()]).T
+    return img
 
 def flatten_2_kernel(x):
     x = np.reshape(x, (len(x),16,5,5))
