@@ -1,2 +1,6 @@
-# rotation-invariance-CNN
-rotation-invariance-CNN
+# Convolutional Neural Network from Scratch
+
+
+Convolutional Neural Network from Scratch
+
+
