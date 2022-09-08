@@ -135,7 +135,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Rotation Invariance CNN')
 
     parser.add_argument("--epoch", default=10, type=int)
-    parser.add_argument("--learning_rate", default=0.003, type=int)
+    parser.add_argument("--learning_rate", default=0.003, type=float)
     parser.add_argument("--model", default="lenet5", type=str)
     parser.add_argument("--save_count", default=1000, type=int)
 

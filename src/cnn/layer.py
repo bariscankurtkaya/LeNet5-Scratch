@@ -139,8 +139,8 @@ def update_params(backward_cache: backward_cache, network:network, hyperparamete
 # Layer creation functions
 def create_conv_layer(kernel_count:int, kernel_channel:int, kernel_size:int, activation:activation_funcs, pooling:pooling) -> conv_layer:
     net_conv_layer: conv_layer = {
-        "kernel": np.random.rand(kernel_count, kernel_channel, kernel_size, kernel_size),
-        "bias": np.random.rand(kernel_count, 1),
+        "kernel": np.random.rand(kernel_count, kernel_channel, kernel_size, kernel_size) - 0-5,
+        "bias": np.random.rand(kernel_count, 1) - 0.5,
         "activation": activation,
         "pooling": pooling
     }
