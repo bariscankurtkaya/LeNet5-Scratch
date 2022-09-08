@@ -1,6 +1,6 @@
-# Convolutional Neural Network from Scratch
+# LeNet5 from Scratch
 
 
-Convolutional Neural Network from Scratch
+LeNet5 from Scratch
 
 
