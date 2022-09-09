@@ -240,3 +240,12 @@ def binary_cross_entropy(true_label: np.ndarray, predictions: np.ndarray) -> int
 
     del true_labels, term_0, term_1
     return loss
+
+def test_results(ground_truths: np.ndarray, predictions: List[int]) -> float:
+    predictions = np.array(predictions)
+    
+    results = predictions - ground_truths
+
+    result = np.count_nonzero(results == 0)
+
+    return (result / predictions.size) * 100

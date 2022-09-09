@@ -138,6 +138,7 @@ def parse_args():
     parser.add_argument("--learning_rate", default=0.003, type=float)
     parser.add_argument("--model", default="lenet5", type=str)
     parser.add_argument("--save_count", default=1000, type=int)
+    parser.add_argument("--read_model", default=False, type=bool)
 
 
     args = parser.parse_args()

@@ -1,6 +1,6 @@
 from signal_func import prepare_img_to_LeNet5, prepare_to_fc_network
 from type import *
-from layer import create_conv_layer, create_fc_layer,forward_prop, backward_prop, binary_cross_entropy
+from layer import create_conv_layer, create_fc_layer,forward_prop, backward_prop, binary_cross_entropy, test_results
 from utils import save_avg_and_delete
 
 
@@ -39,7 +39,7 @@ def create_fc_network() -> network:
 
     return fc_network
 
-def train_network(train: dataset, test:dataset, network: network,  hyperparameter:hyperparameters) -> List[int]:
+def train_network(train: dataset, network: network,  hyperparameter:hyperparameters) -> List[int]:
     for n in range(hyperparameter["epoch"]):
         
         randomize = np.arange(len(train["input"]))
@@ -71,7 +71,7 @@ def train_network(train: dataset, test:dataset, network: network,  hyperparamete
 
             net_forward_cache: forward_cache = forward_prop(input=img, network=network)
 
-            print(i, "th : ", train["target"][i] ," --", np.argmax(net_forward_cache["fc_cache"]["activation_outputs"][-1]), np.max(net_forward_cache["fc_cache"]["activation_outputs"][-1]))
+            #print(i, "th : ", train["target"][i] ," --", np.argmax(net_forward_cache["fc_cache"]["activation_outputs"][-1]), np.max(net_forward_cache["fc_cache"]["activation_outputs"][-1]))
             LOSS.append(binary_cross_entropy(true_label= train["target"][i], predictions=net_forward_cache["fc_cache"]["activation_outputs"][-1]))
 
             network = backward_prop(forward_cache= net_forward_cache, network=network, true_labels= train["target"][i], input=img, hyperparameter=hyperparameter)
@@ -82,4 +82,24 @@ def train_network(train: dataset, test:dataset, network: network,  hyperparamete
 
 
 
+
+def test_network(test: dataset, network: network) -> float:
+    predictions: List[int] = []
+
+    for i in range(len(test["input"])):
+
+        if network["name"] == "lenet5":
+            img: IMG = prepare_img_to_LeNet5(img = test["input"][i])
+        if network["name"] == "fully":
+            img: IMG = prepare_to_fc_network(img = test["input"][i])
+
+        net_forward_cache: forward_cache = forward_prop(input=img, network=network)
+
+        predictions.append(np.argmax(net_forward_cache["fc_cache"]["activation_outputs"][-1]))
+        
+        del net_forward_cache
+    
+    test_result = test_results(test["target"], predictions=predictions)
+    del predictions
+    return test_result
 
