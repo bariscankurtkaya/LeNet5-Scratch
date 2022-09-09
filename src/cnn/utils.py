@@ -67,3 +67,11 @@ def save_model(network: network):
 
         # write every key and value to file
         w.writerow([key, val])
+
+
+def set_model() -> network:
+    with open("model.csv", newline="\n") as data:
+        for line in csv.DictReader(data):
+            print("line: ", line)
+            
+    return None
